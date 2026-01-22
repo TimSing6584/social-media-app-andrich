@@ -8,14 +8,16 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  Dimensions
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
+import { documentDirectory, copyAsync } from "expo-file-system/legacy";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { saveUserPost } from "../../db";
 import { Post } from "../../types/post";
 
 const MAX_TITLE_LENGTH = 25;
-
+const { height } = Dimensions.get('window');
 export const CreatePostScreen: React.FC = () => {
   const { top, bottom } = useSafeAreaInsets();
   const [title, setTitle] = useState("");
@@ -63,11 +65,31 @@ export const CreatePostScreen: React.FC = () => {
     setSubmitting(true);
 
     try {
+      let permanentImageUri = undefined;
+      if (imageUri) {
+        try {
+          // Create a unique filename
+          const filename = `post_image_${Date.now()}.jpg`;
+          const permanentUri = `${documentDirectory}${filename}`;
+          // Copy the temporary file to permanent storage
+          await copyAsync({
+            from: imageUri,
+            to: permanentUri,
+          });
+
+          permanentImageUri = permanentUri;
+        } catch (error) {
+          console.error('Error saving image permanently:', error);
+          Alert.alert('Error', 'Failed to save image. Please try again.');
+          return;
+        }
+      }
+
       const newPost: Post = {
         title: title.trim(),
         author: author.trim(),
         description: description.trim() || undefined,
-        image: imageUri || undefined,
+        image: permanentImageUri,
       };
 
       await saveUserPost(newPost);
@@ -241,7 +263,7 @@ const styles = StyleSheet.create({
   },
   previewImage: {
     width: "100%",
-    height: 200,
+    height: height * 0.3,
     borderRadius: 8,
     backgroundColor: "#ececec",
   },
