@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { InteractionManager } from "react-native";
 import rawData from "../../../assets/seed.json";
+import { getUserPosts } from "../../db";
 import { Post } from "../../types/post";
 
 const INITIAL_COUNT = 60;
@@ -9,29 +10,49 @@ const BATCH_SIZE = 200;
 type FeedState = {
   posts: Post[];
   loading: boolean;
+  refresh: () => Promise<void>;
 };
 
 /**
- * Incrementally load the large seed dataset to avoid blocking the UI thread.
- * - Take an initial slice for fast first paint.
- * - Append in batches after interactions complete, yielding between batches.
+ * Incrementally load the large seed dataset + user posts to avoid blocking the UI thread.
+ * - User posts appear first (newest first).
+ * - Seed data loads incrementally: initial slice for fast first paint, then batches.
  */
 export const useFeedData = (): FeedState => {
-  const allPosts = useMemo(() => {
+  const seedPosts = useMemo(() => {
     const parsed = (rawData as { posts?: Post[] }).posts ?? [];
     return parsed;
   }, []);
 
-  const [posts, setPosts] = useState<Post[]>(() =>
-    allPosts.slice(0, INITIAL_COUNT)
+  const [userPosts, setUserPosts] = useState<Post[]>([]);
+  const [seedPostsDisplayed, setSeedPostsDisplayed] = useState<Post[]>(() =>
+    seedPosts.slice(0, INITIAL_COUNT)
   );
   const [loading, setLoading] = useState<boolean>(true);
 
+  // Load user posts from AsyncStorage
+  const loadUserPosts = useCallback(async () => {
+    try {
+      const posts = await getUserPosts();
+      setUserPosts(posts);
+    } catch (error) {
+      console.error("Error loading user posts:", error);
+    }
+  }, []);
+
+  // Refresh function to reload user posts (called after creating a new post)
+  const refresh = useCallback(async () => {
+    await loadUserPosts();
+  }, [loadUserPosts]);
+
   useEffect(() => {
+    // Load user posts on mount
+    loadUserPosts();
+
     let cancelled = false;
 
     const loadRemaining = () => {
-      const total = allPosts.length;
+      const total = seedPosts.length;
       let cursor = INITIAL_COUNT;
 
       const appendBatch = () => {
@@ -41,9 +62,9 @@ export const useFeedData = (): FeedState => {
         }
 
         const nextCursor = Math.min(cursor + BATCH_SIZE, total);
-        const batch = allPosts.slice(cursor, nextCursor);
+        const batch = seedPosts.slice(cursor, nextCursor);
 
-        setPosts((prev) => [...prev, ...batch]);
+        setSeedPostsDisplayed((prev) => [...prev, ...batch]);
         cursor = nextCursor;
 
         // Yield to the event loop to keep the UI responsive.
@@ -59,9 +80,14 @@ export const useFeedData = (): FeedState => {
     return () => {
       cancelled = true;
     };
-  }, [allPosts]);
+  }, [seedPosts, loadUserPosts]);
 
-  return { posts, loading };
+  // Combine user posts (first) with seed posts
+  const allPosts = useMemo(() => {
+    return [...userPosts, ...seedPostsDisplayed];
+  }, [userPosts, seedPostsDisplayed]);
+
+  return { posts: allPosts, loading, refresh };
 };
 
 const scheduleIdle =

@@ -8,6 +8,7 @@ import {
   View,
   Dimensions,
 } from "react-native";
+import { useFocusEffect } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFeedData } from "./useFeedData";
 import { Post } from "../../types/post";
@@ -31,7 +32,7 @@ const FeedItem = ({ item }: { item: Post }) => {
         </Text>
       ) : null}
       {item.image ? (
-        <Image source={{ uri: item.image }} style={styles.image} resizeMode="contain"/>
+        <Image source={{ uri: item.image }} style={styles.image} resizeMode="cover"/>
       ) : null}
     </View>
   );
@@ -39,7 +40,14 @@ const FeedItem = ({ item }: { item: Post }) => {
 
 export const FeedScreen: React.FC = () => {
   const { bottom, top } = useSafeAreaInsets();
-  const { posts, loading } = useFeedData();
+  const { posts, loading, refresh } = useFeedData();
+
+  // Refresh feed when this tab is focused (e.g., after creating a post)
+  useFocusEffect(
+    React.useCallback(() => {
+      refresh();
+    }, [refresh])
+  );
 
   const contentInset = useMemo(
     () => ({ paddingTop: 12 + top, paddingBottom: 12 + bottom }),
