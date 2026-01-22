@@ -1,5 +1,5 @@
 import React from "react";
-import { TouchableOpacity } from "react-native";
+import { TouchableOpacity, Alert } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
@@ -20,8 +20,24 @@ const TabNavigator: React.FC = () => {
     if (!isAuthenticated) return null;
     return (
       <TouchableOpacity
-        onPress={async () => {
-          await signOut();
+        onPress={() => {
+          Alert.alert(
+            "Logout",
+            "Are you sure you want to logout?",
+            [
+              {
+                text: "Cancel",
+                style: "cancel",
+              },
+              {
+                text: "Logout",
+                onPress: async () => {
+                  await signOut();
+                },
+                style: "destructive",
+              },
+            ]
+          );
         }}
         style={{ marginRight: 16 }}
       >
@@ -76,17 +92,18 @@ export const RootNavigator: React.FC = () => {
   return (
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
-        {isAuthenticated ? (
-          <Stack.Screen name="Tabs" component={TabNavigator} />
-        ) : (
-          <>
-            <Stack.Screen name="Tabs" component={TabNavigator} />
-            <Stack.Screen
-              name="Auth"
-              component={AuthScreen}
-              options={{ presentation: "modal" }}
-            />
-          </>
+        <Stack.Screen name="Tabs" component={TabNavigator} />
+        {!isAuthenticated && (
+          <Stack.Screen
+            name="Auth"
+            component={AuthScreen}
+            options={{
+              presentation: "modal",
+              headerShown: true,
+              headerTitle: "Feed",
+              headerBackTitle: "",
+            }}
+          />
         )}
       </Stack.Navigator>
     </NavigationContainer>
