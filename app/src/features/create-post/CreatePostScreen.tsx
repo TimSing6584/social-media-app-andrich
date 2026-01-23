@@ -13,6 +13,7 @@ import {
 import * as ImagePicker from "expo-image-picker";
 import { documentDirectory, copyAsync } from "expo-file-system/legacy";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useNavigation } from "@react-navigation/native";
 import { saveUserPost } from "../../db";
 import { Post } from "../../types/post";
 
@@ -20,6 +21,7 @@ const MAX_TITLE_LENGTH = 25;
 const { height } = Dimensions.get('window');
 export const CreatePostScreen: React.FC = () => {
   const { top, bottom } = useSafeAreaInsets();
+  const navigation = useNavigation();
   const [title, setTitle] = useState("");
   const [author, setAuthor] = useState("");
   const [description, setDescription] = useState("");
@@ -101,7 +103,10 @@ export const CreatePostScreen: React.FC = () => {
       setImageUri(null);
 
       Alert.alert("Success", "Your post has been created!", [
-        { text: "OK", onPress: () => {} },
+        { text: "OK", onPress: () => {
+          // Navigate to Feed tab
+          (navigation as any).navigate("Tabs", { screen: "Feed" });
+        }},
       ]);
     } catch (error) {
       Alert.alert("Error", "Failed to create post. Please try again.");
