@@ -1,6 +1,8 @@
 # Social Media App
 
-A mobile social media application built with React Native and Expo, featuring user authentication, post creation, and a dynamic feed.
+- A mobile social media application built with React Native and Expo, featuring user authentication, post creation, and a dynamic feed.
+
+- **Set Up + Demo Video**: https://youtu.be/WYuzcpCw2bY
 
 ## 1) Core Features
 
@@ -103,6 +105,10 @@ A mobile social media application built with React Native and Expo, featuring us
 
 ## 4) How to run app locally ?
 
+### Prerequisites:
+- Node.js
+- A mobile device or emulator
+
 
 ### a) Installation
 
@@ -135,3 +141,7 @@ A mobile social media application built with React Native and Expo, featuring us
    ```
 4. Scan the QR code shown in terminal using your iPhone camera
 5. The app will open in Expo Go
+
+
+
+!! **You can refer to this video for the set up and app demo**: https://youtu.be/WYuzcpCw2bY
