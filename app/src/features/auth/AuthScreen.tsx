@@ -15,7 +15,12 @@ import { useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "../../contexts/AuthContext";
-import { loginWithBiometric, getBiometricNotSupportedMessage } from "../../services/authService";
+import {
+  loginWithBiometric,
+  getBiometricNotSupportedMessage,
+  isBiometricAvailable,
+  getBiometricType
+} from "../../services/authService";
 
 type AuthMode = "login" | "signup";
 
@@ -38,7 +43,6 @@ export const AuthScreen: React.FC = () => {
 
   useEffect(() => {
     const checkBiometric = async () => {
-      const { isBiometricAvailable, getBiometricType } = await import("../../services/authService");
       const available = await isBiometricAvailable();
       const type = await getBiometricType();
       setBiometricAvailable(available);
