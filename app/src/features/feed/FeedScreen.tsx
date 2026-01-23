@@ -62,11 +62,14 @@ export const FeedScreen: React.FC = () => {
   const { bottom, top } = useSafeAreaInsets();
   const { posts, loading, refresh } = useFeedData();
   const [selectedImageUri, setSelectedImageUri] = useState<string | null>(null);
+  const flatListRef = React.useRef<FlatList>(null);
 
   // Refresh feed when this tab is focused (e.g., after creating a post)
   useFocusEffect(
     React.useCallback(() => {
       refresh();
+      // Scroll to top when returning to feed (e.g., after creating a post)
+      flatListRef.current?.scrollToOffset({ offset: 0, animated: false });
     }, [refresh])
   );
 
@@ -78,6 +81,7 @@ export const FeedScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <FlatList
+        ref={flatListRef}
         data={posts}
         renderItem={({ item }) => <FeedItem item={item} onImagePress={setSelectedImageUri} />}
         keyExtractor={(_, index) => `post-${index}`}

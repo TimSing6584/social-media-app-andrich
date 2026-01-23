@@ -52,10 +52,6 @@ const saveUsers = async (users: User[]): Promise<void> => {
  */
 const findUserByEmail = async (email: string): Promise<User | null> => {
   const users = await getUsers();
-  // Testing find users
-  users.forEach(user => console.log(user.email));
-
-
   return users.find(user => user.email === email) || null;
 };
 
