@@ -45,7 +45,7 @@ export const CreatePostScreen: React.FC = () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
-      aspect: [4, 3],
+      aspect: [height, height * 0.3], // Match feed image aspect ratio (width : 0.3*height)
       quality: 0.8,
     });
 
@@ -182,7 +182,7 @@ export const CreatePostScreen: React.FC = () => {
           <Text style={styles.label}>Image (Optional)</Text>
           {imageUri ? (
             <View style={styles.imageContainer}>
-              <Image source={{ uri: imageUri }} style={styles.previewImage} />
+              <Image source={{ uri: imageUri }} style={styles.previewImage} resizeMode="cover" />
               <TouchableOpacity
                 style={styles.removeImageButton}
                 onPress={removeImage}

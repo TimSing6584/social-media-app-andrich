@@ -24,12 +24,24 @@ import {
 
 type AuthMode = "login" | "signup";
 
-// Simple email validation
+// More comprehensive email validation
 const isValidEmail = (email: string): boolean => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
-};
+  // RFC 5322 compliant email regex (more strict)
+  const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
 
+  if (!emailRegex.test(email)) {
+    return false;
+  }
+  const domain = email.split('@')[1]?.toLowerCase();
+
+  // Ensure TLD has at least 2 characters
+  const tld = domain?.split('.').pop();
+  if (!tld || tld.length < 2) {
+    return false;
+  }
+
+  return true;
+};
 export const AuthScreen: React.FC = () => {
   const navigation = useNavigation();
   const { top, bottom } = useSafeAreaInsets();
@@ -99,7 +111,7 @@ export const AuthScreen: React.FC = () => {
         const result = await signUp(email.trim().toLowerCase(), password);
         if (result.success) {
           Alert.alert("Success", "Account created successfully!");
-          
+
           // If askBiometric is true, show biometric popup
           if (result.askBiometric) {
             Alert.alert(

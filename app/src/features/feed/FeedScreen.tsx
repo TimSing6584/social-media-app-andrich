@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -7,15 +7,24 @@ import {
   Text,
   View,
   Dimensions,
+  Modal,
+  TouchableOpacity,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFeedData } from "./useFeedData";
 import { Post } from "../../types/post";
 
 const ITEM_HEIGHT = 140;
-const { height } = Dimensions.get('window');
-const FeedItem = ({ item }: { item: Post }) => {
+const { height, width } = Dimensions.get('window');
+const DESCRIPTION_THRESHOLD = 100; // Character limit before showing "More"
+
+const FeedItem = ({ item, onImagePress }: { item: Post; onImagePress?: (imageUri: string) => void }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const descriptionLength = item.description?.length || 0;
+  const needsExpansion = descriptionLength > DESCRIPTION_THRESHOLD;
+
   return (
     <View style={styles.card}>
       <View style={styles.headerRow}>
@@ -27,12 +36,23 @@ const FeedItem = ({ item }: { item: Post }) => {
         </Text>
       </View>
       {item.description ? (
-        <Text style={styles.description} numberOfLines={3}>
-          {item.description}
-        </Text>
+        <View>
+          <Text style={styles.description} numberOfLines={isExpanded ? undefined : 3}>
+            {item.description}
+          </Text>
+          {needsExpansion && (
+            <TouchableOpacity onPress={() => setIsExpanded(!isExpanded)}>
+              <Text style={styles.moreText}>
+                {isExpanded ? "Show Less" : "... More"}
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
       ) : null}
       {item.image ? (
-        <Image source={{ uri: item.image }} style={styles.image} resizeMode="cover"/>
+        <TouchableOpacity onPress={() => onImagePress?.(item.image!)} activeOpacity={1}>
+          <Image source={{ uri: item.image }} style={styles.image} resizeMode="cover"/>
+        </TouchableOpacity>
       ) : null}
     </View>
   );
@@ -41,6 +61,7 @@ const FeedItem = ({ item }: { item: Post }) => {
 export const FeedScreen: React.FC = () => {
   const { bottom, top } = useSafeAreaInsets();
   const { posts, loading, refresh } = useFeedData();
+  const [selectedImageUri, setSelectedImageUri] = useState<string | null>(null);
 
   // Refresh feed when this tab is focused (e.g., after creating a post)
   useFocusEffect(
@@ -58,7 +79,7 @@ export const FeedScreen: React.FC = () => {
     <View style={styles.container}>
       <FlatList
         data={posts}
-        renderItem={({ item }) => <FeedItem item={item} />}
+        renderItem={({ item }) => <FeedItem item={item} onImagePress={setSelectedImageUri} />}
         keyExtractor={(_, index) => `post-${index}`}
         contentContainerStyle={contentInset}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
@@ -78,6 +99,32 @@ export const FeedScreen: React.FC = () => {
           ) : null
         }
       />
+
+      {/* Image Modal */}
+      <Modal
+        visible={selectedImageUri !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setSelectedImageUri(null)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            {selectedImageUri && (
+              <Image
+                source={{ uri: selectedImageUri }}
+                style={styles.fullscreenImage}
+                resizeMode="contain"
+              />
+            )}
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setSelectedImageUri(null)}
+            >
+              <Ionicons name="close" size={30} color="#fff" />
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -119,6 +166,12 @@ const styles = StyleSheet.create({
   description: {
     fontSize: 14,
     color: "#333",
+    marginBottom: 4,
+  },
+  moreText: {
+    fontSize: 14,
+    color: "#007AFF",
+    fontWeight: "600",
     marginBottom: 8,
   },
   image: {
@@ -134,5 +187,32 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     alignItems: "center",
     justifyContent: "center",
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.9)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    width: width,
+    height: height,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  fullscreenImage: {
+    width: "100%",
+    height: "100%",
+  },
+  closeButton: {
+    position: "absolute",
+    top: 40,
+    right: 20,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    borderRadius: 25,
+    width: 50,
+    height: 50,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });
