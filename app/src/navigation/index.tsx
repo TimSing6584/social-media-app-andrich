@@ -85,25 +85,17 @@ const TabNavigator: React.FC = () => {
   );
 };
 
-// Root Stack Navigator (Tabs + Auth)
+// Root Stack Navigator (Auth first, then Tabs)
 export const RootNavigator: React.FC = () => {
   const { isAuthenticated } = useAuth();
 
   return (
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="Tabs" component={TabNavigator} />
-        {!isAuthenticated && (
-          <Stack.Screen
-            name="Auth"
-            component={AuthScreen}
-            options={{
-              presentation: "modal",
-              headerShown: true,
-              headerTitle: "Feed",
-              headerBackTitle: "",
-            }}
-          />
+        {isAuthenticated ? (
+          <Stack.Screen name="Tabs" component={TabNavigator} />
+        ) : (
+          <Stack.Screen name="Auth" component={AuthScreen} />
         )}
       </Stack.Navigator>
     </NavigationContainer>
